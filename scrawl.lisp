@@ -15,28 +15,40 @@
 	  #\Linefeed #\Page #\Return #\Rubout)
   "Additional characters to trim.")
 
+(defun whitespace-char-p (x)
+  (or (char= #\space x)
+      (not (graphic-char-p x))))
+
 (defun read-string (stream balance)
   "Read a string from STREAM until BALANCE is zero, or we hit another Scrawl form. 
 
 BALANCE indicates the difference (# of left braces) - (# of right braces) so far."
-  (let ((raw
-	    (with-output-to-string (out-stream)
-	      ;; If we're balanced, or the next char is @, we don't want
-	      ;; to consume any more.
-	      (loop :for c := (peek-char nil stream t nil t)
-		    :until (or (zerop balance)
-			       (char= c +at-sign+))
-		    ;; Ok, consume the next character.
-		    :do (progn
-			  (read-char stream t nil t)
-			  (incf balance
-			      (cond ((char= c +left-brace+) 1)
-				    ((char= c +right-brace+) -1)
-				    (t 0)))
-			  (when (plusp balance)			    
-			    (write-char c out-stream))
-			  (cond ((zerop balance) )))))))
-      (values raw balance)))
+  (let* ((whitespace-only t)
+	 (raw
+	   (with-output-to-string (out-stream)
+	     ;; If we're balanced, or the next char is @, we don't want
+	     ;; to consume any more.
+	     (loop :for c := (peek-char nil stream nil nil t)
+		   :until (or (null c)
+			      (zerop balance)
+			      (char= c +at-sign+))
+		   ;; Ok, consume the next character.
+		   :do (progn
+			 (read-char stream t nil t)
+			 (incf balance
+			       (cond ((char= c +left-brace+) 1)
+				     ((char= c +right-brace+) -1)
+				     (t 0)))
+			 (when (plusp balance)
+			   (unless (whitespace-char-p c)
+			     (setf whitespace-only nil))
+			   (write-char c out-stream))
+			 (cond ((zerop balance) )))))))
+    (values
+     (if whitespace-only
+	 ""
+	 raw)
+     balance)))
 
 
 (defun read-left-bracket (stream char)
@@ -80,10 +92,10 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
 	    (args nil)
 	    (body nil)
 	    (op-only t))
-	(when (char= +left-bracket+ (peek))
+	(when (and (peek) (char= +left-bracket+ (peek)))
 	  (setf args (read stream nil nil t)
 		op-only nil))
-	(when (char= +left-brace+ (peek))
+	(when (and (peek) (char= +left-brace+ (peek)))
 	  (setf body (read stream nil nil t)
 		op-only nil))
 	(if op-only

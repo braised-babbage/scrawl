@@ -55,8 +55,7 @@ Here's an extended example:
 is read as
 
 ```
-(DIV :ID "my-div" (H1 "Hello World!") "
-  "
+(DIV :ID "my-div" (H1 "Hello World!")
  (P "I am " (B "cow") "
     Hear me moo
     I weigh twice as much as you
@@ -69,7 +68,7 @@ There are a few choices we have made.
 
 - Whitespace is trimmed from the start of the first string and the end
   of the last, e.g. `@foo{ bar @baz frob }` results in `(FOO "bar " BAZ " frob")`
-- Empty strings are ignored, e.g.  `@foo{ }` results in `(FOO)`.
+- Whitespace-only strings are ignored, e.g.  `@foo{ }` results in `(FOO)`.
 - Escaping within the body of a scrawl expression is accomplished via
   `@`, e.g. `@foo{ @"@" }` yields `(FOO "@")`
 - The easiest way force inclusion of whitespace is to escape it:

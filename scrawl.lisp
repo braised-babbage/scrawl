@@ -1,8 +1,30 @@
 (defpackage #:scrawl
   (:use #:cl #:named-readtables)
-  (:export #:syntax))
+  (:export #:syntax
+           #:*debug-stream*))
 
 (in-package #:scrawl)
+
+;;; For debugging
+
+(declaim (type (or boolean stream) *debug-stream*))
+(defvar *debug-stream* nil)
+(defun dbg* (control &rest args)
+  (format *debug-stream* "; SCRAWL: ")
+  (apply #'format *debug-stream* control args)
+  (fresh-line *debug-stream*)
+  (finish-output *debug-stream*))
+(defmacro dbg (control &rest args)
+  `(when *debug-stream*
+     (dbg* ,control ,@args)))
+(defun at-most (n obj)
+  (let ((str (remove #\Newline (prin1-to-string obj))))
+    (if (< n (length str))
+        (concatenate 'string (subseq str 0 (- n 3)) "...")
+        str)))
+
+
+;;; Scrawl Stuff
 
 (defconstant +at-sign+ #\@)
 (defconstant +left-brace+ #\{)
@@ -92,12 +114,14 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
 	    (args nil)
 	    (body nil)
 	    (op-only t))
+        (dbg "@~S" operator)
 	(when (and (peek) (char= +left-bracket+ (peek)))
 	  (setf args (read stream nil nil t)
 		op-only nil))
 	(when (and (peek) (char= +left-brace+ (peek)))
 	  (setf body (read stream nil nil t)
-		op-only nil))
+		op-only nil)
+          (dbg "    ~A" (at-most 50 body)))
 	(if op-only
 	    operator
 	    (append (list operator) args body)))))

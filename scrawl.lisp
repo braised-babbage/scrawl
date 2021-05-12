@@ -46,7 +46,7 @@ This must be a function with the following lambda list:
 
 The arguments indicate the following:
 
-    - OPERATOR: A symbol representing the operator.
+    - OPERATOR: A Lisp form (almost always a symbol in idiomatic usage) representing the operator.
 
     - OPTIONS: If OPTIONS-PRESENT-P, then a list of options, typically a p-list. If OPTIONS-PRESENT-P is null, then the form as read did not have options present.
 
@@ -54,7 +54,7 @@ The arguments indicate the following:
 
 The function should produce an object representative of the form being handled.
 
-The default handler is SCRAWL:DEFAULT-FORM-HANDLER..")
+The default handler is SCRAWL:DEFAULT-FORM-HANDLER.")
 
 ;;; Scrawl Stuff
 
@@ -147,27 +147,15 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
   "Read a full Scrawl expression."
   (declare (ignore char))
   (flet ((peek () (peek-char nil stream nil nil t)))
-      (let ((operator (read stream t nil t))
-            (args '#1=#:none)
-            (body '#1#))
-        (dbg "@~S" operator)
-        (when (and (peek) (char= +left-bracket+ (peek)))
-          (setf args (read stream nil nil t)))
-        (when (and (peek) (char= +left-brace+ (peek)))
-          (setf body (read stream nil nil t))
-          (dbg "    ~A" (at-most 50 body)))
-
-        (cond
-          ((and (eq args '#1#)
-                (eq body '#1#))
-           (funcall *form-handler* operator))
-          ((eq args '#1#)
-           (funcall *form-handler* operator :body body))
-          ((eq body '#1#)
-           (funcall *form-handler* operator :options args))
-          (t
-           (funcall *form-handler* operator :options args
-                                            :body body))))))
+    (let ((operator (read stream t nil t))
+          (args '()))
+      (dbg "@~S" operator)
+      (when (and (peek) (char= +left-bracket+ (peek)))
+        (setf (getf args ':options) (read stream nil nil t)))
+      (when (and (peek) (char= +left-brace+ (peek)))
+        (setf (getf args ':body) (read stream nil nil t))
+        (dbg "    ~A" (at-most 50 (getf args ':body))))
+      (apply *form-handler* operator args))))
 
 
 (named-readtables:defreadtable syntax

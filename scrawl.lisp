@@ -1,7 +1,9 @@
 (defpackage #:scrawl
   (:use #:cl #:named-readtables)
   (:export #:syntax
-           #:*debug-stream*))
+           #:*debug-stream*
+           #:*form-handler*
+           #:default-form-handler))
 
 (in-package #:scrawl)
 
@@ -23,6 +25,36 @@
         (concatenate 'string (subseq str 0 (- n 3)) "...")
         str)))
 
+
+;;; Customizing Scrawl Behavior
+
+(defun default-form-handler (operator &key options body)
+  "The default handler for *FORM-HANDLER*. This function produces a list
+
+    (<operator> <spliced options> <spliced body>)
+
+which follows the behavior of Racket's Scribble system."
+  (append (list operator) options body))
+
+(defvar *form-handler* 'default-form-handler
+  "How should we handle each produced form?
+
+This must be a function with the following lambda list:
+
+    (OPERATOR &key (OPTIONS nil OPTIONS-PRESENT-P)
+                   (BODY    nil BODY-PRESENT-P))
+
+The arguments indicate the following:
+
+    - OPERATOR: A symbol representing the operator.
+
+    - OPTIONS: If OPTIONS-PRESENT-P, then a list of options, typically a p-list. If OPTIONS-PRESENT-P is null, then the form as read did not have options present.
+
+    - BODY: If BODY-PRESENT-P, a list of strings and sub-forms. If BODY-PRESENT-P is null, then the form as read did not have a body present.
+
+The function should produce an object representative of the form being handled.
+
+The default handler is SCRAWL:DEFAULT-FORM-HANDLER..")
 
 ;;; Scrawl Stuff
 
@@ -116,20 +148,26 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
   (declare (ignore char))
   (flet ((peek () (peek-char nil stream nil nil t)))
       (let ((operator (read stream t nil t))
-	    (args nil)
-	    (body nil)
-	    (op-only t))
+	    (args '#1=#:none)
+	    (body '#1#))
         (dbg "@~S" operator)
 	(when (and (peek) (char= +left-bracket+ (peek)))
-	  (setf args (read stream nil nil t)
-		op-only nil))
+	  (setf args (read stream nil nil t)))
 	(when (and (peek) (char= +left-brace+ (peek)))
-	  (setf body (read stream nil nil t)
-		op-only nil)
+	  (setf body (read stream nil nil t))
           (dbg "    ~A" (at-most 50 body)))
-	(if op-only
-	    operator
-	    (append (list operator) args body)))))
+
+        (cond
+          ((and (eq args '#1#)
+                (eq body '#1#))
+           (funcall *form-handler* operator))
+          ((eq args '#1#)
+           (funcall *form-handler* operator :body body))
+          ((eq body '#1#)
+           (funcall *form-handler* operator :options args))
+          (t
+           (funcall *form-handler* operator :options args
+                                            :body body))))))
 
 
 (named-readtables:defreadtable syntax

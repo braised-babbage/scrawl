@@ -66,7 +66,7 @@ The default handler is SCRAWL:DEFAULT-FORM-HANDLER..")
 
 (defparameter *trim-characters*
   (vector #\Space #\Newline #\Backspace #\Tab 
-	  #\Linefeed #\Page #\Return #\Rubout)
+          #\Linefeed #\Page #\Return #\Rubout)
   "Additional characters to trim.")
 
 (defun whitespacep (string)
@@ -83,30 +83,30 @@ The default handler is SCRAWL:DEFAULT-FORM-HANDLER..")
 
 BALANCE indicates the difference (# of left braces) - (# of right braces) so far."
   (let* ((whitespace-only t)
-	 (raw
-	   (with-output-to-string (out-stream)
-	     ;; If we're balanced, or the next char is @, we don't want
-	     ;; to consume any more.
-	     (loop :for c := (peek-char nil stream nil nil t)
-		   :until (or (null c)
-			      (zerop balance)
-			      (char= c +at-sign+))
-		   ;; Ok, consume the next character.
-		   :do (progn
-			 (read-char stream t nil t)
-			 (incf balance
-			       (cond ((char= c +left-brace+) 1)
-				     ((char= c +right-brace+) -1)
-				     (t 0)))
-			 (when (plusp balance)
-			   (unless (whitespace-char-p c)
-			     (setf whitespace-only nil))
-			   (write-char c out-stream))
-			 (cond ((zerop balance) )))))))
+         (raw
+           (with-output-to-string (out-stream)
+             ;; If we're balanced, or the next char is @, we don't want
+             ;; to consume any more.
+             (loop :for c := (peek-char nil stream nil nil t)
+                   :until (or (null c)
+                              (zerop balance)
+                              (char= c +at-sign+))
+                   ;; Ok, consume the next character.
+                   :do (progn
+                         (read-char stream t nil t)
+                         (incf balance
+                               (cond ((char= c +left-brace+) 1)
+                                     ((char= c +right-brace+) -1)
+                                     (t 0)))
+                         (when (plusp balance)
+                           (unless (whitespace-char-p c)
+                             (setf whitespace-only nil))
+                           (write-char c out-stream))
+                         (cond ((zerop balance) )))))))
     (values
      (if whitespace-only
-	 ""
-	 raw)
+         ""
+         raw)
      balance)))
 
 
@@ -120,21 +120,21 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
   "Read from a left brace until we have a matching right brace."
   (declare (ignore char))
   (loop :with balance := 1
-	:for iter :from 0
-	:for (string new-balance) := (multiple-value-list
-				      (read-string stream balance))
-	:do (setf balance new-balance)
-	;; we need to trim the start of the first string
-	:when (zerop iter)
-	  :do (setf string (string-left-trim *trim-characters* string))
-	;; and the end of the last
-	:when (zerop balance)
-	  :do (setf string (string-right-trim *trim-characters* string))
-	:when (plusp (length string))
-	  :collect string
-	:when (plusp balance)
-	  :collect (read stream t nil t)
-	:until (zerop balance)))
+        :for iter :from 0
+        :for (string new-balance) := (multiple-value-list
+                                      (read-string stream balance))
+        :do (setf balance new-balance)
+        ;; we need to trim the start of the first string
+        :when (zerop iter)
+          :do (setf string (string-left-trim *trim-characters* string))
+        ;; and the end of the last
+        :when (zerop balance)
+          :do (setf string (string-right-trim *trim-characters* string))
+        :when (plusp (length string))
+          :collect string
+        :when (plusp balance)
+          :collect (read stream t nil t)
+        :until (zerop balance)))
 
 
 (defun error-on-delimiter (stream char)
@@ -148,13 +148,13 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
   (declare (ignore char))
   (flet ((peek () (peek-char nil stream nil nil t)))
       (let ((operator (read stream t nil t))
-	    (args '#1=#:none)
-	    (body '#1#))
+            (args '#1=#:none)
+            (body '#1#))
         (dbg "@~S" operator)
-	(when (and (peek) (char= +left-bracket+ (peek)))
-	  (setf args (read stream nil nil t)))
-	(when (and (peek) (char= +left-brace+ (peek)))
-	  (setf body (read stream nil nil t))
+        (when (and (peek) (char= +left-bracket+ (peek)))
+          (setf args (read stream nil nil t)))
+        (when (and (peek) (char= +left-brace+ (peek)))
+          (setf body (read stream nil nil t))
           (dbg "    ~A" (at-most 50 body)))
 
         (cond

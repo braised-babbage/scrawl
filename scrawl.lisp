@@ -134,9 +134,9 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
 
 (named-readtables:defreadtable syntax
   (:merge :standard)
-  (:macro-char +at-sign+ #'read-scrawl-expression)
-  (:macro-char +left-bracket+ #'read-left-bracket)
+  (:macro-char +at-sign+ 'read-scrawl-expression)
+  (:macro-char +left-bracket+ 'read-left-bracket)
   (:macro-char +right-bracket+ (get-macro-character #\) nil))
-  (:macro-char +left-brace+ #'read-left-brace)
-  (:macro-char +right-brace+ #'error-on-delimiter))
+  (:macro-char +left-brace+ 'read-left-brace)
+  (:macro-char +right-brace+ 'error-on-delimiter))
 

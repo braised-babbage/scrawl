@@ -37,9 +37,14 @@
 	  #\Linefeed #\Page #\Return #\Rubout)
   "Additional characters to trim.")
 
-(defun whitespace-char-p (x)
-  (or (char= #\space x)
-      (not (graphic-char-p x))))
+(defun whitespacep (string)
+  (and (cl-ppcre:scan "^\\s+$" string) t))
+
+(defun whitespace-char-p (c)
+  (let ((s (load-time-value
+            (make-string 1))))
+    (setf (char s 0) c)
+    (whitespacep s)))
 
 (defun read-string (stream balance)
   "Read a string from STREAM until BALANCE is zero, or we hit another Scrawl form. 

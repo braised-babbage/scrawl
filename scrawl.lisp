@@ -3,7 +3,8 @@
   (:export #:syntax
            #:*debug-stream*
            #:*form-handler*
-           #:default-form-handler))
+           #:default-form-handler
+           #:*string-handler*))
 
 (in-package #:scrawl)
 
@@ -55,6 +56,11 @@ The arguments indicate the following:
 The function should produce an object representative of the form being handled.
 
 The default handler is SCRAWL:DEFAULT-FORM-HANDLER.")
+
+(defvar *string-handler* 'identity
+  "How should plain strings be handled?
+
+This should be a unary function taking a string and returning an object. By default, it just returns the string.")
 
 ;;; Scrawl Stuff
 
@@ -131,7 +137,7 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
         :when (zerop balance)
           :do (setf string (string-right-trim *trim-characters* string))
         :when (plusp (length string))
-          :collect string
+          :collect (funcall *string-handler* string)
         :when (plusp balance)
           :collect (read stream t nil t)
         :until (zerop balance)))

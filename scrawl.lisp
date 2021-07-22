@@ -153,6 +153,10 @@ BALANCE indicates the difference (# of left braces) - (# of right braces) so far
   "Read a full Scrawl expression."
   (declare (ignore char))
   (flet ((peek () (peek-char nil stream nil nil t)))
+    (when (and (peek) (char= #\@ (peek)))
+      (dbg "Literal @ sign")
+      (assert (char= #\@ (read-char stream t nil t)))
+      (return-from read-scrawl-expression "@"))
     (let ((operator (read stream t nil t))
           (args '()))
       (dbg "@~S" operator)
